@@ -88,10 +88,23 @@ Respond ONLY with this JSON, no other text:
 
     let parsed
     try {
-      const clean = text.replace(/```json|```/g, '').trim()
-      parsed = JSON.parse(clean)
+      // Try to extract JSON from the response
+      let clean = text.replace(/```json|```/g, '').trim()
+      // Try direct parse first
+      try {
+        parsed = JSON.parse(clean)
+      } catch(e) {
+        // Try to find JSON object in the text
+        const jsonMatch = clean.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          parsed = JSON.parse(jsonMatch[0])
+        } else {
+          throw new Error('No JSON found in response')
+        }
+      }
     } catch(e) {
-      throw new Error('Failed to parse AI response')
+      console.error('Parse error, raw text:', text.substring(0, 500))
+      throw new Error('Failed to parse AI response: ' + e.message)
     }
 
     // Save to DB
