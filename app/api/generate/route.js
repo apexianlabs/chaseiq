@@ -84,29 +84,26 @@ Respond ONLY with this JSON, no other text:
       throw new Error(errData.message || errData.error || 'AI generation failed')
     }
     const aiData = await aiRes.json()
-    // AI API returns { result: {...} } or { result: { raw_response: "..." } }
+    // AI API returns { result: { emails: [...] } } or { result: { raw_response: "..." } }
     const resultData = aiData.result || aiData.content || aiData.output || {}
-    const text = typeof resultData === 'string' ? resultData : 
-                 resultData.raw_response || JSON.stringify(resultData)
 
     let parsed
     try {
-      // Try to extract JSON from the response
-      let clean = text.replace(/```json|```/g, '').trim()
-      // Try direct parse first
-      try {
-        parsed = JSON.parse(clean)
-      } catch(e) {
-        // Try to find JSON object in the text
+      if (resultData.emails) {
+        // Direct structured response
+        parsed = resultData
+      } else if (resultData.raw_response) {
+        // Claude returned text - parse it
+        const clean = resultData.raw_response.replace(/```json|```/g, '').trim()
         const jsonMatch = clean.match(/\{[\s\S]*\}/)
-        if (jsonMatch) {
-          parsed = JSON.parse(jsonMatch[0])
-        } else {
-          throw new Error('No JSON found in response')
-        }
+        parsed = JSON.parse(jsonMatch ? jsonMatch[0] : clean)
+      } else {
+        parsed = resultData
+      }
+      if (!parsed.emails || !Array.isArray(parsed.emails)) {
+        throw new Error('No emails array in response')
       }
     } catch(e) {
-      console.error('Parse error, raw text:', text.substring(0, 500))
       throw new Error('Failed to parse AI response: ' + e.message)
     }
 
