@@ -1,41 +1,125 @@
 import { NextResponse } from 'next/server'
 
-const AI_API_URL = process.env.AI_API_URL
-const AI_API_KEY = process.env.AI_API_KEY
-const DB_API_URL = process.env.DB_API_URL
-const DB_API_KEY = process.env.DB_API_KEY_CHASEIQ
-
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { userId, ...inputs } = body
+    const { clientName, clientEmail, invoiceNumber, amount, projectName, dueDate, relationship, tone, notes, userId } = body
 
-    // Call AI API
-    const aiRes = await fetch(`${AI_API_URL}/api/process`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${AI_API_KEY}` },
-      body: JSON.stringify({ task: 'generate_chaseiq', inputs })
-    })
-    const aiData = await aiRes.json()
-    if (!aiRes.ok) throw new Error(aiData.error || 'AI generation failed')
-
-    const result = aiData.data
-
-    // Save to DB
-    let itemId = null
-    if (userId && DB_API_URL) {
-      try {
-        const dbRes = await fetch(`${DB_API_URL}/db/chaseiq/chaseiq_items`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${DB_API_KEY}` },
-          body: JSON.stringify({ user_id: userId, result_data: result, status: 'draft', ...inputs })
-        })
-        const dbData = await dbRes.json()
-        itemId = dbData.data?.id || null
-      } catch(e) { console.error('DB save failed:', e.message) }
+    if (!clientName || !invoiceNumber || !amount || !dueDate) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    return NextResponse.json({ itemId, result })
+    // Check usage limit
+    if (userId) {
+      const usageRes = await fetch(
+        `${process.env.DB_API_URL}/usage/check?user_id=${userId}&product=chaseiq`,
+        { headers: { 'Authorization': `Bearer ${process.env.DB_API_KEY_CHASEIQ}` } }
+      )
+      const usage = await usageRes.json()
+      if (!usage.allowed) {
+        return NextResponse.json({ error: 'limit_reached', used: usage.used, limit: usage.limit }, { status: 403 })
+      }
+    }
+
+    const daysOverdue = Math.floor((new Date() - new Date(dueDate)) / (1000 * 60 * 60 * 24))
+    const relationshipContext = {
+      new: 'This is a new client — keep tone warm and assume good faith',
+      regular: 'This is a regular client with a good track record',
+      longterm: 'This is a long-term trusted client — maintain the relationship while being clear',
+      difficult: 'This client has been difficult or slow to pay before — be firmer from the start'
+    }[relationship] || 'Regular client'
+
+    const toneContext = {
+      professional: 'Start professional and escalate gradually',
+      firm: 'Start firm and escalate to very firm — skip the pleasantries',
+      final: 'Start at final warning level — this invoice is seriously overdue'
+    }[tone] || 'Professional'
+
+    const prompt = `You are writing invoice chase emails for a freelancer. Generate exactly 4 chase emails as a JSON object.
+
+Invoice Details:
+- Client: ${clientName}${clientEmail ? ` (${clientEmail})` : ''}
+- Invoice: ${invoiceNumber}
+- Amount: ${amount}
+- Project: ${projectName || 'Not specified'}
+- Due Date: ${dueDate}
+- Days Overdue: ${daysOverdue > 0 ? daysOverdue + ' days' : 'due today'}
+- Relationship: ${relationshipContext}
+- Tone: ${toneContext}
+${notes ? `- Additional context: ${notes}` : ''}
+
+Write 4 emails that escalate in urgency:
+- Email 1 (Day 1): Warm, friendly — assume the invoice slipped through
+- Email 2 (Day 7): Polite but clear — reference the previous message
+- Email 3 (Day 14): Firm — specific deadline, mention late fee if applicable
+- Email 4 (Day 30): Final notice — clear consequence, last chance
+
+Rules:
+- Reference the specific invoice number and amount in every email
+- Keep each email under 150 words
+- Sound like the freelancer wrote it personally — not a template
+- Each email must be clearly more urgent than the last
+- No threatening language, no all-caps
+- Include a specific payment deadline in emails 3 and 4
+
+Respond ONLY with this JSON, no other text:
+{
+  "emails": [
+    { "subject": "...", "body": "..." },
+    { "subject": "...", "body": "..." },
+    { "subject": "...", "body": "..." },
+    { "subject": "...", "body": "..." }
+  ],
+  "summary": "One sentence summary of the chase strategy used"
+}`
+
+    const aiRes = await fetch(`${process.env.AI_API_URL}/ai/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.AI_API_KEY}` },
+      body: JSON.stringify({ task: 'generate_chase_sequence', prompt, userId })
+    })
+
+    if (!aiRes.ok) throw new Error('AI generation failed')
+    const aiData = await aiRes.json()
+    const text = aiData.result || aiData.content || ''
+
+    let parsed
+    try {
+      const clean = text.replace(/```json|```/g, '').trim()
+      parsed = JSON.parse(clean)
+    } catch(e) {
+      throw new Error('Failed to parse AI response')
+    }
+
+    // Save to DB
+    if (userId) {
+      await fetch(`${process.env.DB_API_URL}/db/chaseiq/invoices`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DB_API_KEY_CHASEIQ}` },
+        body: JSON.stringify({
+          user_id: userId,
+          client_name: clientName,
+          client_email: clientEmail || null,
+          invoice_number: invoiceNumber,
+          amount,
+          project_name: projectName || null,
+          due_date: dueDate,
+          relationship,
+          tone,
+          result_data: parsed,
+          status: 'chasing'
+        })
+      })
+
+      // Track usage
+      await fetch(`${process.env.DB_API_URL}/usage/track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DB_API_KEY_CHASEIQ}` },
+        body: JSON.stringify({ user_id: userId, product: 'chaseiq', action: 'generate_chase_sequence' })
+      })
+    }
+
+    return NextResponse.json({ ...parsed, invoiceNumber, clientName, amount })
   } catch(err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
