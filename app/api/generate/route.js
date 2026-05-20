@@ -73,15 +73,18 @@ Respond ONLY with this JSON, no other text:
   "summary": "One sentence summary of the chase strategy used"
 }`
 
-    const aiRes = await fetch(`${process.env.AI_API_URL}/ai/generate`, {
+    const aiRes = await fetch(`${process.env.AI_API_URL}/ai/process`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.AI_API_KEY}` },
-      body: JSON.stringify({ task: 'generate_chase_sequence', prompt, userId })
+      body: JSON.stringify({ task: 'generate_chase_sequence', inputs: { prompt } })
     })
 
-    if (!aiRes.ok) throw new Error('AI generation failed')
+    if (!aiRes.ok) {
+      const errData = await aiRes.json().catch(() => ({}))
+      throw new Error(errData.message || errData.error || 'AI generation failed')
+    }
     const aiData = await aiRes.json()
-    const text = aiData.result || aiData.content || ''
+    const text = aiData.result || aiData.content || aiData.output || ''
 
     let parsed
     try {
