@@ -213,11 +213,11 @@ export default function DashboardPage() {
                   onMouseLeave={e => e.currentTarget.style.background='transparent'}>
                   <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0,flex:1}}>
                     <div style={{width:34,height:34,borderRadius:9,background:'#f0f4ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:'#7c3aed',flexShrink:0,border:'1px solid rgba(0,0,0,0.04)'}}>
-                      {(item.title || item.name || '?')[0]?.toUpperCase()}
+                      {(item.client_name || item.title || item.name || '?')[0]?.toUpperCase()}
                     </div>
                     <div style={{minWidth:0}}>
-                      <p style={{fontSize:13,fontWeight:600,color:'#0f172a',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',letterSpacing:'-0.1px'}}>{item.title || item.name}</p>
-                      <p style={{fontSize:11,color:'#94a3b8',marginTop:2}}>{new Date(item.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</p>
+                      <p style={{fontSize:13,fontWeight:600,color:'#0f172a',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',letterSpacing:'-0.1px'}}>{item.client_name || item.title || item.name}{item.amount ? ' — ' + item.amount : ''}</p>
+                      <p style={{fontSize:11,color:'#94a3b8',marginTop:2}}>{item.invoice_number ? item.invoice_number + ' · ' : ''}{new Date(item.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</p>
                     </div>
                   </div>
                   <Link href={`/items/${item.id}`}
