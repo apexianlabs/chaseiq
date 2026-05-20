@@ -84,7 +84,10 @@ Respond ONLY with this JSON, no other text:
       throw new Error(errData.message || errData.error || 'AI generation failed')
     }
     const aiData = await aiRes.json()
-    const text = aiData.result || aiData.content || aiData.output || ''
+    // AI API returns { result: {...} } or { result: { raw_response: "..." } }
+    const resultData = aiData.result || aiData.content || aiData.output || {}
+    const text = typeof resultData === 'string' ? resultData : 
+                 resultData.raw_response || JSON.stringify(resultData)
 
     let parsed
     try {
