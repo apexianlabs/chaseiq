@@ -85,7 +85,7 @@ Respond ONLY with this JSON, no other text:
     }
     const aiData = await aiRes.json()
     // AI API returns { result: { emails: [...] } } or { result: { raw_response: "..." } }
-    const resultData = aiData.result || aiData.content || aiData.output || {}
+    const resultData = aiData.data || aiData.result || aiData.content || aiData.output || {}
 
     let parsed
     try {
