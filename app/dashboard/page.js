@@ -35,7 +35,7 @@ export default function DashboardPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await res.json()
-      setItems(data.items || [])
+      setItems(data.data || data.items || [])
     } catch(e) {}
     finally { setLoading(false) }
   }
@@ -63,6 +63,10 @@ export default function DashboardPage() {
 
   const thisMonth = items.filter(i => new Date(i.created_at) > new Date(Date.now() - 30*24*60*60*1000)).length
   const recentItems = items.slice(0, 6)
+  const totalAmount = items.reduce((sum, inv) => {
+    const amt = parseFloat((inv.amount || '0').replace(/[^0-9.]/g, ''))
+    return sum + (isNaN(amt) ? 0 : amt)
+  }, 0)
 
   const Sidebar = () => (
     <div style={{width:220,background:'#0f172a',display:'flex',flexDirection:'column',minHeight:'100vh',flexShrink:0,position:'relative'}}>
