@@ -73,7 +73,7 @@ Respond ONLY with this JSON, no other text:
   "summary": "One sentence summary of the chase strategy used"
 }`
 
-    const aiRes = await fetch(`${process.env.AI_API_URL}/ai/process`, {
+    const aiRes = await fetch(`${process.env.AI_API_URL}/api/process`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.AI_API_KEY}` },
       body: JSON.stringify({ task: 'generate_chase_sequence', inputs: { prompt } })
