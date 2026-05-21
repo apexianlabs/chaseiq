@@ -7,11 +7,21 @@ export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser]           = useState(null)
   const [items, setItems]         = useState([])
+  const [usageData, setUsageData]  = useState(null)
   const [loading, setLoading]     = useState(true)
   const [isMobile, setIsMobile]   = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  useEffect(() => {
+  
+  const fetchUsage = async (userId) => {
+    try {
+      const res = await fetch('/api/usage?user_id=' + userId)
+      const data = await res.json()
+      setUsageData(data)
+    } catch(e) {}
+  }
+
+useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900)
     check()
     window.addEventListener('resize', check)
@@ -24,6 +34,7 @@ export default function DashboardPage() {
     try {
       const u = JSON.parse(decodeURIComponent(match[1]))
       setUser(u)
+      fetchUsage(u.id)
       loadItems(u.id)
     } catch(e) { router.push('/login') }
   }, [])
@@ -195,7 +206,23 @@ export default function DashboardPage() {
                 <Link href="/generate" style={{fontSize:12,color:'#7c3aed',textDecoration:'none',fontWeight:600,background:'rgba(0,0,0,0.03)',padding:'4px 10px',borderRadius:6}}>+ New</Link>
               </div>
 
-              {loading ? (
+              
+        {usageData && usageData.plan === 'free' && (
+          <div style={{background:'#fff',border:'1px solid #e2e8f0',borderRadius:12,padding:16,marginBottom:16}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <span style={{fontSize:12,fontWeight:600,color:'#475569'}}>Free plan · this month</span>
+              <span style={{fontSize:12,fontWeight:700,color:usageData.used >= usageData.limit ? '#dc2626' : '#7c3aed'}}>{usageData.used} / {usageData.limit} uses</span>
+            </div>
+            <div style={{background:'#f1f5f9',borderRadius:6,height:6,marginBottom:8}}>
+              <div style={{background:usageData.used >= usageData.limit ? '#dc2626' : '#7c3aed',borderRadius:6,height:6,width:Math.max(4,Math.min(100,(usageData.used/usageData.limit)*100))+'%',transition:'width 0.3s'}}/>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:11,color:'#94a3b8'}}>Resets {new Date(usageData.reset_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+              <a href="/billing" style={{fontSize:11,fontWeight:700,color:'#7c3aed',textDecoration:'none'}}>Upgrade →</a>
+            </div>
+          </div>
+        )}
+        {loading ? (
                 <div style={{padding:48,textAlign:'center',color:'#94a3b8',fontSize:13}}>Loading...</div>
               ) : recentItems.length === 0 ? (
                 <div style={{padding:'48px 24px',textAlign:'center'}}>
