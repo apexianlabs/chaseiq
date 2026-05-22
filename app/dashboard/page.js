@@ -80,7 +80,7 @@ useEffect(() => {
   }, 0)
 
   const Sidebar = () => (
-    <div style={{width:220,background:'#0f172a',display:'flex',flexDirection:'column',minHeight:'100vh',flexShrink:0,position:'relative'}}>
+    <div style={{width:'min(220px,80vw)',background:'#0f172a',display:'flex',flexDirection:'column',minHeight:'100vh',flexShrink:0,position:'relative'}}>
       {/* Logo */}
       <div style={{padding:'20px 16px 16px',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
         <Link href="/" style={{display:'flex',alignItems:'center',gap:9,textDecoration:'none'}}>
