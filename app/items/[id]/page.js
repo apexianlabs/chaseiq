@@ -3,6 +3,14 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 
+const Logo = ({ size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="32" height="32" rx="8" fill="#2563eb"/>
+    <text x="16" y="23" textAnchor="middle" fontSize="18" fontWeight="900" fontFamily="Arial,sans-serif" fill="white">A</text>
+  </svg>
+)
+
+
 export default function InvoiceDetailPage() {
   const router = useRouter()
   const { id } = useParams()
@@ -49,7 +57,7 @@ export default function InvoiceDetailPage() {
       {/* Header */}
       <div style={{background:'#fff',borderBottom:'1px solid #e2e8f0',padding:'14px 24px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <Link href="/items" style={{display:'flex',alignItems:'center',gap:8,textDecoration:'none'}}>
-          <div style={{width:28,height:28,borderRadius:7,background:COLOR,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:800,color:'#fff'}}>C</div>
+          <Logo size={28}/>
           <span style={{fontSize:14,fontWeight:800,color:'#0f172a'}}>ChaseIQ</span>
         </Link>
         <Link href="/items" style={{fontSize:13,color:'#64748b',textDecoration:'none'}}>← All invoices</Link>
