@@ -1,4 +1,5 @@
 export const metadata = {
+  icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
   title: 'ChaseIQ — AI invoice chasing for freelancers',
   description: 'AI invoice chasing for freelancers',
 }
