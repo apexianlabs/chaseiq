@@ -19,22 +19,6 @@ const STAGE_CONFIG = {
   archived:    { label:'Archived',    color:'#ef4444', bg:'rgba(239,68,68,0.1)'   },
 }
 
-const Logo = ({ size = 32 }) => (
-  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="ch1" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#a78bfa"/>
-        <stop offset="100%" stopColor="#5b21b6"/>
-      </linearGradient>
-    </defs>
-    <circle cx="50" cy="50" r="42" fill="url(#ch1)"/>
-    <rect x="30" y="22" width="40" height="52" rx="5" fill="none" stroke="white" strokeWidth="2.5" opacity="0.9"/>
-    <line x1="38" y1="38" x2="62" y2="38" stroke="white" strokeWidth="3" strokeLinecap="round" opacity="0.9"/>
-    <line x1="38" y1="48" x2="62" y2="48" stroke="white" strokeWidth="3" strokeLinecap="round" opacity="0.9"/>
-    <path d="M38 60 L55 60 L50 55 M55 60 L50 65" stroke="#fbbf24" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-  </svg>
-)
-
 const Icon = ({ name, size=16, color='currentColor' }) => {
   const icons = {
     doc:      <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,
@@ -149,7 +133,7 @@ export default function DashboardPage() {
   const Sidebar = () => (
     <div style={{width:220,background:'linear-gradient(180deg,#0a0f2e 0%,#0f172a 100%)',display:'flex',flexDirection:'column',padding:'20px 12px',height:'100vh',position:'sticky',top:0,flexShrink:0,overflowX:'hidden'}}>
       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:28,paddingLeft:8}}>
-        <Logo size={28}/>
+        <div style={{width:28,height:28,borderRadius:7,background:COLOR,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:800,color:'#fff',flexShrink:0}}>{PRODUCT_INITIAL}</div>
         <span style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-0.3px'}}>{PRODUCT_NAME}</span>
       </div>
       <button onClick={() => setCmdOpen(true)} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:7,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.06)',cursor:'pointer',marginBottom:14,width:'100%'}}>
